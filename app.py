@@ -888,11 +888,17 @@ def download_report():
 
 
 # ==================================================
+# INITIALIZE DATABASE
+# ==================================================
+
+# This runs when the application starts, including on Render.
+create_database()
+
+
+# ==================================================
 # RUN APPLICATION
 # ==================================================
 
 if __name__ == "__main__":
-
-    create_database()
-
     app.run(debug=True)
+
