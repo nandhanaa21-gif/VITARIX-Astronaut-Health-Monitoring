@@ -854,57 +854,13 @@ footer p {
 
             <div class="section-heading">
                 <div class="eyebrow">ASTRONAUT INFORMATION</div>
-                <h2> Astronaut Profile</h2>
+                <h2>Astronaut Profile</h2>
                 <p>Identity and mission information.</p>
             </div>
 
             <div class="card">
 
-                {% if profile %}
-                    <h3 class="panel-title">Saved Astronaut Information</h3>
-
-                    <div class="profile-display">
-
-                        <div class="profile-item">
-                            <small>Astronaut Name</small>
-                            <strong>{{ profile['astronaut_name'] }}</strong>
-                        </div>
-
-                        <div class="profile-item">
-                            <small>Astronaut ID</small>
-                            <strong>{{ profile['astronaut_id'] }}</strong>
-                        </div>
-
-                        <div class="profile-item">
-                            <small>Age</small>
-                            <strong>{{ profile['age'] }}</strong>
-                        </div>
-
-                        <div class="profile-item">
-                            <small>Gender</small>
-                            <strong>{{ profile['gender'] }}</strong>
-                        </div>
-
-                        <div class="profile-item">
-                            <small>Mission Name</small>
-                            <strong>{{ profile['mission_name'] }}</strong>
-                        </div>
-
-                        <div class="profile-item">
-                            <small>Mission Duration</small>
-                            <strong>{{ profile['mission_duration'] or 'Not specified' }}</strong>
-                        </div>
-
-                        <div class="profile-item">
-                            <small>Mission Status</small>
-                            <strong>{{ profile['mission_status'] }}</strong>
-                        </div>
-
-                    </div>
-
-                {% else %}
-                    <p class="empty">No astronaut has registered yet. Enter the details below.</p>
-                {% endif %}
+                <!-- SAVED ASTRONAUT INFORMATION DISPLAY REMOVED -->
 
                 <h3 class="panel-title">Register Astronaut</h3>
                 <p class="subtitle">Enter astronaut identity and mission details.</p>
