@@ -1,7 +1,10 @@
-
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
+from flask import (
+    Flask, render_template, request, redirect,
+    url_for, flash, send_file, session
+)
 import sqlite3
 import os
+import uuid
 from datetime import datetime
 from io import BytesIO
 from xml.sax.saxutils import escape
@@ -12,7 +15,11 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 
 app = Flask(__name__)
-app.secret_key = "vitarix_demo_key"
+
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "vitarix_local_development_key_change_this"
+)
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_DIR = os.path.join(BASE_DIR, "database")
@@ -20,10 +27,23 @@ DB_PATH = os.path.join(DB_DIR, "vitarix.db")
 
 
 # ==================================================
+# SESSION MANAGEMENT
+# ==================================================
+
+def get_session_id():
+
+    if "vitarix_session_id" not in session:
+        session["vitarix_session_id"] = uuid.uuid4().hex
+
+    return session["vitarix_session_id"]
+
+
+# ==================================================
 # DATABASE CONNECTION
 # ==================================================
 
 def get_connection():
+
     os.makedirs(DB_DIR, exist_ok=True)
 
     conn = sqlite3.connect(DB_PATH)
@@ -63,6 +83,7 @@ def create_database():
         )
     """)
 
+    # Preserve the old profile table.
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS astronaut_profile (
             id INTEGER PRIMARY KEY,
@@ -76,7 +97,7 @@ def create_database():
         )
     """)
 
-    # Handle older databases without timestamp columns
+    # Add missing columns to older databases.
     for table in ("health_records", "mental_health_records"):
 
         columns = [
@@ -90,6 +111,26 @@ def create_database():
             cursor.execute(
                 f"ALTER TABLE {table} ADD COLUMN submitted_at TEXT"
             )
+
+        if "session_id" not in columns:
+            cursor.execute(
+                f"ALTER TABLE {table} ADD COLUMN session_id TEXT"
+            )
+
+    # New profile table for separate astronaut sessions.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS astronaut_profiles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL UNIQUE,
+            astronaut_name TEXT,
+            astronaut_id TEXT,
+            age INTEGER,
+            gender TEXT,
+            mission_name TEXT,
+            mission_duration TEXT,
+            mission_status TEXT
+        )
+    """)
 
     conn.commit()
     conn.close()
@@ -172,7 +213,9 @@ def calculate_risk(physical, mental):
             "level": "No Data",
             "score": 0,
             "reasons": [],
-            "recommendation": "Submit a health check-in to view the demo risk assessment."
+            "recommendation": (
+                "Submit a health check-in to view the demo risk assessment."
+            )
         }
 
     if physical:
@@ -183,29 +226,41 @@ def calculate_risk(physical, mental):
 
         if heart_rate < 50 or heart_rate > 100:
             score += 2
-            reasons.append("Heart rate outside demo reference range")
+            reasons.append(
+                "Heart rate outside demo reference range"
+            )
 
         if temperature < 36 or temperature > 37.5:
             score += 2
-            reasons.append("Temperature outside demo reference range")
+            reasons.append(
+                "Temperature outside demo reference range"
+            )
 
         if sleep < 6:
             score += 1
-            reasons.append("Sleep duration below 6 hours")
+            reasons.append(
+                "Sleep duration below 6 hours"
+            )
 
     if mental:
 
         if int(mental["stress_level"]) >= 8:
             score += 2
-            reasons.append("High stress level reported")
+            reasons.append(
+                "High stress level reported"
+            )
 
         if mental["mood"] in ("Sad", "Anxious"):
             score += 1
-            reasons.append("Mood check-in needs attention")
+            reasons.append(
+                "Mood check-in needs attention"
+            )
 
         if mental["sleep_quality"] == "Poor":
             score += 1
-            reasons.append("Poor sleep quality reported")
+            reasons.append(
+                "Poor sleep quality reported"
+            )
 
     if score == 0:
 
@@ -337,42 +392,38 @@ def get_wellness_recommendations(physical, mental):
 @app.route("/")
 def home():
 
+    current_session = get_session_id()
+
     conn = get_connection()
 
     physical_rows = conn.execute("""
         SELECT * FROM health_records
+        WHERE session_id = ?
         ORDER BY id DESC
-    """).fetchall()
+    """, (current_session,)).fetchall()
 
     mental_rows = conn.execute("""
         SELECT * FROM mental_health_records
+        WHERE session_id = ?
         ORDER BY id DESC
-    """).fetchall()
+    """, (current_session,)).fetchall()
 
-    profile = conn.execute("""
-        SELECT * FROM astronaut_profile
-        WHERE id = 1
-    """).fetchone()
+    profile_row = conn.execute("""
+        SELECT * FROM astronaut_profiles
+        WHERE session_id = ?
+    """, (current_session,)).fetchone()
 
     conn.close()
 
-    # IMPORTANT FIX:
-    # Convert SQLite Row objects into normal dictionaries.
-    # This allows Flask/Jinja to serialize chart data using tojson.
-
     records = [dict(row) for row in physical_rows]
-
     mental_records = [dict(row) for row in mental_rows]
 
-    # Convert profile separately for consistent template handling.
-    profile = dict(profile) if profile else None
+    profile = dict(profile_row) if profile_row else None
 
     latest_physical = records[0] if records else None
-
     latest_mental = mental_records[0] if mental_records else None
 
     physical_alerts = analyze_health(latest_physical)
-
     mental_alerts = analyze_mental_health(latest_mental)
 
     risk = calculate_risk(
@@ -474,12 +525,13 @@ def save_profile():
 
         status = "Training"
 
+    current_session = get_session_id()
+
     conn = get_connection()
 
     conn.execute("""
-        INSERT OR REPLACE INTO astronaut_profile
-        (
-            id,
+        INSERT INTO astronaut_profiles (
+            session_id,
             astronaut_name,
             astronaut_id,
             age,
@@ -488,8 +540,18 @@ def save_profile():
             mission_duration,
             mission_status
         )
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+
+        ON CONFLICT(session_id) DO UPDATE SET
+            astronaut_name = excluded.astronaut_name,
+            astronaut_id = excluded.astronaut_id,
+            age = excluded.age,
+            gender = excluded.gender,
+            mission_name = excluded.mission_name,
+            mission_duration = excluded.mission_duration,
+            mission_status = excluded.mission_status
     """, (
+        current_session,
         name,
         astronaut_id,
         age,
@@ -520,24 +582,17 @@ def submit_complete():
     try:
 
         heart_rate = float(request.form["heart_rate"])
-
         temperature = float(request.form["temperature"])
-
         blood_pressure = request.form["blood_pressure"].strip()
-
         sleep = float(request.form["sleep"])
 
         mood = request.form["mood"]
-
         stress_level = int(request.form["stress_level"])
-
         sleep_quality = request.form["sleep_quality"]
 
         notes = request.form.get(
             "notes", ""
         ).strip()
-
-        # Validate values
 
         if not 20 <= heart_rate <= 250:
             raise ValueError(
@@ -562,67 +617,79 @@ def submit_complete():
         if mood not in (
             "Happy", "Neutral", "Sad", "Anxious"
         ):
-            raise ValueError("Invalid mood selection.")
+            raise ValueError(
+                "Invalid mood selection."
+            )
 
         if sleep_quality not in (
             "Good", "Average", "Poor"
         ):
-            raise ValueError("Invalid sleep quality.")
+            raise ValueError(
+                "Invalid sleep quality."
+            )
 
         if not blood_pressure:
-            raise ValueError("Please enter blood pressure.")
+            raise ValueError(
+                "Please enter blood pressure."
+            )
 
         timestamp = datetime.now().strftime(
             "%d-%m-%Y %I:%M %p"
         )
+
+        current_session = get_session_id()
 
         conn = get_connection()
 
         try:
 
             conn.execute("""
-                INSERT INTO health_records
-                (
+                INSERT INTO health_records (
                     heart_rate,
                     temperature,
                     blood_pressure,
                     sleep,
-                    submitted_at
+                    submitted_at,
+                    session_id
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?)
             """, (
                 heart_rate,
                 temperature,
                 blood_pressure,
                 sleep,
-                timestamp
+                timestamp,
+                current_session
             ))
 
             conn.execute("""
-                INSERT INTO mental_health_records
-                (
+                INSERT INTO mental_health_records (
                     mood,
                     stress_level,
                     sleep_quality,
                     notes,
-                    submitted_at
+                    submitted_at,
+                    session_id
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?)
             """, (
                 mood,
                 stress_level,
                 sleep_quality,
                 notes,
-                timestamp
+                timestamp,
+                current_session
             ))
 
             conn.commit()
 
         except sqlite3.Error:
+
             conn.rollback()
             raise
 
         finally:
+
             conn.close()
 
         flash(
@@ -654,22 +721,26 @@ def submit_complete():
 @app.route("/download_report")
 def download_report():
 
+    current_session = get_session_id()
+
     conn = get_connection()
 
     physical = conn.execute("""
         SELECT * FROM health_records
+        WHERE session_id = ?
         ORDER BY id DESC LIMIT 1
-    """).fetchone()
+    """, (current_session,)).fetchone()
 
     mental = conn.execute("""
         SELECT * FROM mental_health_records
+        WHERE session_id = ?
         ORDER BY id DESC LIMIT 1
-    """).fetchone()
+    """, (current_session,)).fetchone()
 
     profile = conn.execute("""
-        SELECT * FROM astronaut_profile
-        WHERE id = 1
-    """).fetchone()
+        SELECT * FROM astronaut_profiles
+        WHERE session_id = ?
+    """, (current_session,)).fetchone()
 
     conn.close()
 
@@ -728,17 +799,11 @@ def download_report():
     if profile:
 
         add_line("Name", profile["astronaut_name"])
-
         add_line("Astronaut ID", profile["astronaut_id"])
-
         add_line("Age", profile["age"])
-
         add_line("Gender", profile["gender"])
-
         add_line("Mission", profile["mission_name"])
-
         add_line("Mission Duration", profile["mission_duration"])
-
         add_line("Mission Status", profile["mission_status"])
 
     else:
@@ -888,10 +953,26 @@ def download_report():
 
 
 # ==================================================
+# FINISH ASTRONAUT SESSION
+# ==================================================
+
+@app.route("/finish_session", methods=["POST"])
+def finish_session():
+
+    session.clear()
+
+    flash(
+        "Session completed. VITARIX is ready for the next astronaut.",
+        "success"
+    )
+
+    return redirect(url_for("home"))
+
+
+# ==================================================
 # INITIALIZE DATABASE
 # ==================================================
 
-# This runs when the application starts, including on Render.
 create_database()
 
 
@@ -901,4 +982,3 @@ create_database()
 
 if __name__ == "__main__":
     app.run(debug=True)
-
