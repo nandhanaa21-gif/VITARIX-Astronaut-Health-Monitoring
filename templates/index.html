@@ -1,0 +1,1513 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VITARIX | Mission Health Control</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+    --bg: #081321;
+    --sidebar: #0c1c2e;
+    --panel: #11243a;
+    --panel2: #152c45;
+    --border: #263e57;
+    --blue: #55bdf0;
+    --cyan: #73dcf4;
+    --text: #edf5ff;
+    --muted: #94a9bf;
+    --green: #4ed6a2;
+    --yellow: #f5c66b;
+    --red: #ff7785;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Arial, sans-serif;
+    line-height: 1.6;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 245px;
+    height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    padding: 25px 15px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+}
+
+.brand {
+    padding: 0 12px 28px;
+    border-bottom: 1px solid var(--border);
+}
+
+.brand h1 {
+    color: var(--cyan);
+    font-size: 28px;
+    letter-spacing: 4px;
+    font-weight: 800;
+}
+
+.brand p {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    margin-top: 3px;
+}
+
+.nav-title {
+    color: #718ba5;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 25px 12px 10px;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar nav a {
+    text-decoration: none;
+    color: #b5c7da;
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: .2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar nav a span {
+    width: 22px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+    background: rgba(85,189,240,.13);
+    color: var(--cyan);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 15px 12px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 7px;
+}
+
+/* MAIN AREA */
+
+.main {
+    margin-left: 245px;
+    min-height: 100vh;
+}
+
+.topbar {
+    height: 76px;
+    padding: 0 35px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(12,28,46,.92);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+}
+
+.topbar h2 {
+    color: var(--text);
+    font-size: 17px;
+}
+
+.topbar small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.mission-status {
+    background: rgba(78,214,162,.1);
+    border: 1px solid rgba(78,214,162,.25);
+    color: var(--green);
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.content {
+    padding: 30px 35px;
+    max-width: 1600px;
+    margin: auto;
+}
+
+section {
+    padding: 24px 0 35px;
+    scroll-margin-top: 90px;
+    animation: appear .35s ease;
+}
+
+@keyframes appear {
+    from {opacity: 0; transform: translateY(8px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+.section-heading {
+    margin-bottom: 22px;
+}
+
+.section-heading h2 {
+    color: var(--cyan);
+    font-size: 23px;
+    font-weight: 700;
+}
+
+.section-heading p {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.eyebrow {
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    margin-bottom: 5px;
+}
+
+/* WELCOME PANEL */
+
+.welcome {
+    background: linear-gradient(115deg, #143957, #145078 70%, #17618b);
+    border: 1px solid #285777;
+    border-radius: 15px;
+    padding: 27px 30px;
+    margin-bottom: 27px;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome::after {
+    content: "✦";
+    position: absolute;
+    right: 45px;
+    top: -35px;
+    font-size: 150px;
+    color: rgba(255,255,255,.06);
+}
+
+.welcome h2 {
+    font-size: 24px;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.welcome p {
+    color: #c3dcee;
+    font-size: 13px;
+}
+
+/* CARDS */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 17px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 16px;
+}
+
+.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 21px;
+    margin-bottom: 17px;
+    transition: .2s;
+}
+
+.card:hover {
+    border-color: #3b6485;
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: "";
+    position: absolute;
+    right: -15px;
+    top: -15px;
+    width: 80px;
+    height: 80px;
+    background: rgba(85,189,240,.06);
+    border-radius: 50%;
+}
+
+.stat-icon {
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.stat-value {
+    color: var(--cyan);
+    font-size: 30px;
+    font-weight: 800;
+    margin: 5px 0;
+}
+
+.stat-unit {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* PANELS */
+
+.panel-title {
+    color: #cfe8fa;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+.empty {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 10px 0;
+}
+
+/* ALERTS */
+
+.message, .alert {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 12px;
+}
+
+.success {
+    background: rgba(78,214,162,.12);
+    border: 1px solid rgba(78,214,162,.3);
+    color: #a8efd5;
+}
+
+.error {
+    background: rgba(255,119,133,.12);
+    border: 1px solid rgba(255,119,133,.3);
+    color: #ffc4ca;
+}
+
+.physical-alert {
+    background: rgba(255,119,133,.1);
+    border-left: 4px solid var(--red);
+    color: #ffd0d5;
+}
+
+.mental-alert {
+    background: rgba(85,189,240,.1);
+    border-left: 4px solid var(--blue);
+    color: #c9eaff;
+}
+
+.healthy {
+    background: rgba(78,214,162,.1);
+    border-left: 4px solid var(--green);
+    color: #a8efd5;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+/* RISK */
+
+.risk-level {
+    font-size: 30px;
+    font-weight: 800;
+    margin: 8px 0;
+}
+
+.risk-low {color: var(--green);}
+.risk-moderate {color: var(--yellow);}
+.risk-high {color: var(--red);}
+.risk-no-data {color: var(--muted);}
+
+/* FORMS */
+
+form {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 17px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.full-width {
+    grid-column: 1/-1;
+}
+
+label {
+    color: #d1e0ef;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+input, select, textarea {
+    width: 100%;
+    background: #0a1b2d;
+    border: 1px solid #304c68;
+    color: white;
+    border-radius: 7px;
+    padding: 12px;
+    outline: none;
+    font-family: inherit;
+    font-size: 13px;
+    transition: .2s;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #7189a0;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(85,189,240,.1);
+}
+
+select option {
+    background: var(--panel);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+/* BUTTONS */
+
+button, .download-btn {
+    display: inline-block;
+    background: linear-gradient(110deg,#178dc5,#1672aa);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 12px 19px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: .2s;
+    text-align: center;
+}
+
+button:hover, .download-btn:hover {
+    background: #25a4e1;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 16px rgba(23,141,197,.2);
+}
+
+/* PROFILE */
+
+.profile-display {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.profile-item {
+    background: #0a1b2d;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.profile-item small {
+    color: var(--muted);
+    display: block;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.profile-item strong {
+    color: var(--cyan);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+/* CHARTS */
+
+.chart-container {
+    position: relative;
+    height: 260px;
+    width: 100%;
+}
+
+/* BODY MODEL */
+
+.body-grid {
+    display: grid;
+    grid-template-columns: repeat(4,minmax(0,1fr));
+    gap: 13px;
+}
+
+.body-part {
+    text-align: center;
+    background: #0a1b2d;
+    border: 1px solid var(--border);
+    padding: 20px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.body-part:hover {
+    border-color: var(--blue);
+    background: #15334d;
+    transform: translateY(-3px);
+}
+
+.body-icon {
+    font-size: 30px;
+    display: block;
+    margin-bottom: 7px;
+}
+
+.body-part h3 {
+    color: var(--cyan);
+    font-size: 13px;
+}
+
+.body-part p {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.body-info {
+    display: none;
+    margin-top: 17px;
+    background: #0a1b2d;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 20px;
+    font-size: 13px;
+}
+
+/* TABLES */
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.record-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+}
+
+.record-table th, .record-table td {
+    padding: 13px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 12px;
+}
+
+.record-table th {
+    color: var(--cyan);
+    background: #0a1b2d;
+    white-space: nowrap;
+}
+
+.record-table td {
+    color: #d9e7f5;
+}
+
+.record-table tbody tr:hover {
+    background: rgba(85,189,240,.06);
+}
+
+/* FOOTER */
+
+footer {
+    border-top: 1px solid var(--border);
+    background: var(--sidebar);
+    text-align: center;
+    padding: 25px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+footer p {
+    margin: 4px;
+}
+
+/* MOBILE */
+
+.menu-toggle {
+    display: none;
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 7px 11px;
+    font-size: 18px;
+}
+
+@media(max-width:1100px) {
+    .stats-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:800px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: .25s;
+        width: 255px;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .topbar {
+        padding: 0 18px;
+    }
+
+    .content {
+        padding: 22px 18px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-display {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+    }
+
+    .body-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:500px) {
+    .stats-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 14px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .profile-display {
+        grid-template-columns: 1fr;
+    }
+
+    form {
+        grid-template-columns: 1fr;
+    }
+
+    .full-width {
+        grid-column: auto;
+    }
+
+    .welcome {
+        padding: 22px;
+    }
+
+    .welcome h2 {
+        font-size: 20px;
+    }
+
+    .mission-status {
+        font-size: 9px;
+        padding: 6px 8px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="brand">
+        <h1>VITARIX</h1>
+        <p>ASTRONAUT HEALTH SYSTEM</p>
+    </div>
+
+    <div class="nav-title">MAIN MENU</div>
+
+    <nav>
+        <a href="#dashboard" class="active"><span>▦</span> Dashboard</a>
+        <a href="#profile"><span>♙</span> Astronaut Profile</a>
+        <a href="#risk"><span>◈</span> Risk Assessment</a>
+        <a href="#health-report"><span>＋</span> Health Check-in</a>
+        <a href="#recommendations"><span>✧</span> Wellness Tips</a>
+    </nav>
+
+    <div class="nav-title">HEALTH MONITORING</div>
+
+    <nav>
+        <a href="#analytics"><span>▥</span> Analytics</a>
+        <a href="#body-model"><span>♡</span> Body Model</a>
+        <a href="#physical-records"><span>⌁</span> Physical Records</a>
+        <a href="#mental-records"><span>◉</span> Mental Records</a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <p><span class="status-dot"></span> SYSTEM READY</p>
+        <p style="margin-top:8px;">VITARIX Health Monitoring</p>
+        <p>Demo Environment</p>
+    </div>
+
+</aside>
+
+<!-- MAIN -->
+
+<div class="main">
+
+    <div class="topbar">
+        <div style="display:flex;align-items:center;gap:13px;">
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            <div>
+                <h2>Mission Control</h2>
+                <small>Astronaut Health Monitoring Dashboard</small>
+            </div>
+        </div>
+
+        <div class="mission-status">
+            ● SYSTEM ACTIVE
+        </div>
+    </div>
+
+    <main class="content">
+
+        <!-- FLASH MESSAGES -->
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- DASHBOARD -->
+
+        <section id="dashboard">
+
+            <div class="welcome">
+                <div class="eyebrow">VITARIX / MISSION OVERVIEW</div>
+                <h2>Welcome to Mission Health Control</h2>
+                <p>Monitor astronaut physical health, mental wellness and mission readiness from one place.</p>
+            </div>
+
+            <div class="section-heading">
+                <h2>Health Overview</h2>
+                <p>Latest available health monitoring information.</p>
+            </div>
+
+            <div class="stats-grid">
+
+                <div class="card stat-card">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-label">Heart Rate</div>
+                    <div class="stat-value">
+                        {% if records %}{{ records[0]['heart_rate'] }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-unit">Beats per minute</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-icon">🌡️</div>
+                    <div class="stat-label">Body Temperature</div>
+                    <div class="stat-value">
+                        {% if records %}{{ records[0]['temperature'] }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-unit">Degrees Celsius</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-icon">🌙</div>
+                    <div class="stat-label">Sleep Duration</div>
+                    <div class="stat-value">
+                        {% if records %}{{ records[0]['sleep'] }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-unit">Hours</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-icon">🧠</div>
+                    <div class="stat-label">Stress Level</div>
+                    <div class="stat-value">
+                        {% if mental_records %}{{ mental_records[0]['stress_level'] }}/10{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-unit">Self-reported</div>
+                </div>
+
+            </div>
+
+            <div class="card">
+                <h3 class="panel-title">Mission Health Alerts</h3>
+
+                {% if not records and not mental_records %}
+                    <p class="empty">No health check-ins available. Submit your first health check-in to begin monitoring.</p>
+                {% else %}
+
+                    {% if physical_alerts %}
+                        <h3 class="panel-title">Physical Health Alerts</h3>
+                        {% for alert in physical_alerts %}
+                            <div class="alert physical-alert">{{ alert }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if mental_alerts %}
+                        <h3 class="panel-title">Mental Wellness Alerts</h3>
+                        {% for alert in mental_alerts %}
+                            <div class="alert mental-alert">{{ alert }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if not physical_alerts and not mental_alerts %}
+                        <div class="healthy">✓ No demo alerts detected in the latest check-ins.</div>
+                    {% endif %}
+
+                {% endif %}
+            </div>
+
+        </section>
+
+        <!-- PROFILE -->
+
+        <section id="profile">
+
+            <div class="section-heading">
+                <div class="eyebrow">ASTRONAUT INFORMATION</div>
+                <h2> Astronaut Profile</h2>
+                <p>Identity and mission information.</p>
+            </div>
+
+            <div class="card">
+
+                {% if profile %}
+                    <h3 class="panel-title">Saved Astronaut Information</h3>
+
+                    <div class="profile-display">
+
+                        <div class="profile-item">
+                            <small>Astronaut Name</small>
+                            <strong>{{ profile['astronaut_name'] }}</strong>
+                        </div>
+
+                        <div class="profile-item">
+                            <small>Astronaut ID</small>
+                            <strong>{{ profile['astronaut_id'] }}</strong>
+                        </div>
+
+                        <div class="profile-item">
+                            <small>Age</small>
+                            <strong>{{ profile['age'] }}</strong>
+                        </div>
+
+                        <div class="profile-item">
+                            <small>Gender</small>
+                            <strong>{{ profile['gender'] }}</strong>
+                        </div>
+
+                        <div class="profile-item">
+                            <small>Mission Name</small>
+                            <strong>{{ profile['mission_name'] }}</strong>
+                        </div>
+
+                        <div class="profile-item">
+                            <small>Mission Duration</small>
+                            <strong>{{ profile['mission_duration'] or 'Not specified' }}</strong>
+                        </div>
+
+                        <div class="profile-item">
+                            <small>Mission Status</small>
+                            <strong>{{ profile['mission_status'] }}</strong>
+                        </div>
+
+                    </div>
+
+                {% else %}
+                    <p class="empty">No astronaut has registered yet. Enter the details below.</p>
+                {% endif %}
+
+                <h3 class="panel-title">Register Astronaut</h3>
+                <p class="subtitle">Enter astronaut identity and mission details.</p>
+
+                <form action="{{ url_for('save_profile') }}" method="POST" autocomplete="off">
+
+                    <div class="form-group">
+                        <label>Astronaut Name *</label>
+                        <input type="text" name="astronaut_name" placeholder="Enter astronaut name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Astronaut ID *</label>
+                        <input type="text" name="astronaut_id" placeholder="Example: AST-001" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Age *</label>
+                        <input type="number" name="age" min="1" max="120" placeholder="Enter age" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select name="gender">
+                            <option value="" selected>Select gender</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Other">Other</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mission Name *</label>
+                        <input type="text" name="mission_name" placeholder="Enter mission name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mission Duration</label>
+                        <input type="text" name="mission_duration" placeholder="Example: 6 months">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mission Status</label>
+                        <select name="mission_status">
+                            <option value="Training" selected>Training</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <button type="submit">Register Astronaut</button>
+                    </div>
+
+                </form>
+            </div>
+
+        </section>
+
+        <!-- RISK ASSESSMENT -->
+
+        <section id="risk">
+
+            <div class="section-heading">
+                <div class="eyebrow">HEALTH ANALYSIS</div>
+                <h2>Health Risk Assessment</h2>
+                <p>Rule-based analysis of physical and mental check-ins.</p>
+            </div>
+
+            <div class="card">
+
+                <h3 class="panel-title">Current Demo Risk Level</h3>
+
+                <div class="risk-level
+                    {% if risk['level'] == 'Low' %}risk-low
+                    {% elif risk['level'] == 'Moderate' %}risk-moderate
+                    {% elif risk['level'] == 'High' %}risk-high
+                    {% else %}risk-no-data{% endif %}">
+                    {{ risk['level'] }}
+                </div>
+
+                <p>Demo Risk Score: <strong>{{ risk['score'] }}</strong></p>
+
+                <br>
+
+                <h3 class="panel-title">Factors Identified</h3>
+
+                {% if risk['reasons'] %}
+                    <ul style="padding-left:20px;font-size:13px;color:#d9e7f5;">
+                        {% for reason in risk['reasons'] %}
+                            <li>{{ reason }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty">No demo risk factors identified.</p>
+                {% endif %}
+
+                <br>
+
+                <h3 class="panel-title">Recommendation</h3>
+                <p style="font-size:13px;">{{ risk['recommendation'] }}</p>
+
+            </div>
+
+        </section>
+
+        <!-- HEALTH CHECK-IN -->
+
+        <section id="health-report">
+
+            <div class="section-heading">
+                <div class="eyebrow">DATA ENTRY</div>
+                <h2>Health Check-in</h2>
+                <p>Submit physical and mental wellness information.</p>
+            </div>
+
+            <div class="card">
+
+                <form action="{{ url_for('submit_complete') }}" method="POST">
+
+                    <div class="form-group">
+                        <label>Heart Rate (BPM)</label>
+                        <input type="number" name="heart_rate" min="20" max="250" step="0.1" placeholder="Example: 75" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Body Temperature (°C)</label>
+                        <input type="number" name="temperature" min="25" max="45" step="0.1" placeholder="Example: 36.8" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Blood Pressure</label>
+                        <input type="text" name="blood_pressure" placeholder="Example: 120/80" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sleep Duration (Hours)</label>
+                        <input type="number" name="sleep" min="0" max="24" step="0.1" placeholder="Example: 7" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mood</label>
+                        <select name="mood" required>
+                            <option value="Happy">Happy</option>
+                            <option value="Neutral" selected>Neutral</option>
+                            <option value="Sad">Sad</option>
+                            <option value="Anxious">Anxious</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stress Level (1-10)</label>
+                        <input type="number" name="stress_level" min="1" max="10" value="3" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sleep Quality</label>
+                        <select name="sleep_quality" required>
+                            <option value="Good">Good</option>
+                            <option value="Average" selected>Average</option>
+                            <option value="Poor">Poor</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Notes</label>
+                        <textarea name="notes" placeholder="Enter optional wellness notes"></textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <button type="submit">Submit Health Check-in</button>
+                    </div>
+
+                </form>
+
+            </div>
+
+            <a class="download-btn" href="{{ url_for('download_report') }}">
+                ↓ Download Health Report PDF
+            </a>
+
+        </section>
+
+        <!-- RECOMMENDATIONS -->
+
+        <section id="recommendations">
+
+            <div class="section-heading">
+                <div class="eyebrow">WELLNESS SUPPORT</div>
+                <h2>Personalized Wellness Recommendations</h2>
+                <p>Suggestions based on the latest submitted check-in.</p>
+            </div>
+
+            <div class="card">
+                {% if recommendations %}
+                    {% for recommendation in recommendations %}
+                        <div class="alert mental-alert">{{ recommendation }}</div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty">Recommendations will appear after a health check-in.</p>
+                {% endif %}
+            </div>
+
+        </section>
+
+        <!-- ANALYTICS -->
+
+        <section id="analytics">
+
+            <div class="section-heading">
+                <div class="eyebrow">DATA VISUALIZATION</div>
+                <h2>Health Analytics</h2>
+                <p>Visualize health trends from submitted records.</p>
+            </div>
+
+            <div class="grid">
+
+                <div class="card">
+                    <h3 class="panel-title">Heart Rate Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="heartChart"></canvas>
+                    </div>
+                    <p class="empty" id="heartEmpty" style="display:none;">No heart rate data available yet.</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="panel-title">Temperature Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                    <p class="empty" id="tempEmpty" style="display:none;">No temperature data available yet.</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="panel-title">Sleep Duration Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="sleepChart"></canvas>
+                    </div>
+                    <p class="empty" id="sleepEmpty" style="display:none;">No sleep data available yet.</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="panel-title">Stress Level Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="stressChart"></canvas>
+                    </div>
+                    <p class="empty" id="stressEmpty" style="display:none;">No stress data available yet.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- BODY MODEL -->
+
+        <section id="body-model">
+
+            <div class="section-heading">
+                <div class="eyebrow">BODY SYSTEM MONITORING</div>
+                <h2>Interactive Astronaut Body Model</h2>
+                <p>Select a body system to view its monitoring information.</p>
+            </div>
+
+            <div class="card">
+
+                <div class="body-grid">
+
+                    <div class="body-part" onclick="toggleBody('brainInfo')">
+                        <span class="body-icon">🧠</span>
+                        <h3>Brain</h3>
+                        <p>Mental Wellness</p>
+                    </div>
+
+                    <div class="body-part" onclick="toggleBody('heartInfo')">
+                        <span class="body-icon">❤️</span>
+                        <h3>Heart</h3>
+                        <p>Heart Monitoring</p>
+                    </div>
+
+                    <div class="body-part" onclick="toggleBody('lungsInfo')">
+                        <span class="body-icon">🫁</span>
+                        <h3>Lungs</h3>
+                        <p>Respiratory Awareness</p>
+                    </div>
+
+                    <div class="body-part" onclick="toggleBody('musclesInfo')">
+                        <span class="body-icon">💪</span>
+                        <h3>Muscles</h3>
+                        <p>Physical Activity</p>
+                    </div>
+
+                </div>
+
+                <div class="body-info" id="brainInfo">
+                    <h3>Brain - Mental Wellness</h3>
+                    {% if mental_records %}
+                        <p>Mood: {{ mental_records[0]['mood'] }}</p>
+                        <p>Stress Level: {{ mental_records[0]['stress_level'] }}/10</p>
+                        <p>Sleep Quality: {{ mental_records[0]['sleep_quality'] }}</p>
+                    {% else %}
+                        <p>No mental wellness record available.</p>
+                    {% endif %}
+                    <p>Monitoring is based on manually submitted check-ins.</p>
+                </div>
+
+                <div class="body-info" id="heartInfo">
+                    <h3>Heart - Physical Monitoring</h3>
+                    {% if records %}
+                        <p>Heart Rate: {{ records[0]['heart_rate'] }} BPM</p>
+                        <p>Blood Pressure: {{ records[0]['blood_pressure'] }}</p>
+                    {% else %}
+                        <p>No physical health record available.</p>
+                    {% endif %}
+                    <p>These are manually entered demonstration values.</p>
+                </div>
+
+                <div class="body-info" id="lungsInfo">
+                    <h3>Lungs - Respiratory Awareness</h3>
+                    <p>Respiratory readings are not currently collected by this demo.</p>
+                    <p>Future versions may include oxygen saturation and breathing-rate monitoring.</p>
+                </div>
+
+                <div class="body-info" id="musclesInfo">
+                    <h3>Muscles - Physical Activity</h3>
+                    <p>Maintain suitable movement and exercise routines according to mission guidance.</p>
+                    <p>Activity sensor data is not currently collected by this demo.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- PHYSICAL RECORDS -->
+
+        <section id="physical-records">
+
+            <div class="section-heading">
+                <div class="eyebrow">RECORD HISTORY</div>
+                <h2>Physical Health Records</h2>
+                <p>Previously submitted physical health check-ins.</p>
+            </div>
+
+            <div class="card table-wrapper">
+
+                {% if records %}
+                    <table class="record-table">
+                        <thead>
+                            <tr>
+                                <th>Heart Rate</th>
+                                <th>Temperature</th>
+                                <th>Blood Pressure</th>
+                                <th>Sleep</th>
+                                <th>Submitted At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for record in records %}
+                                <tr>
+                                    <td>{{ record['heart_rate'] }} BPM</td>
+                                    <td>{{ record['temperature'] }} °C</td>
+                                    <td>{{ record['blood_pressure'] }}</td>
+                                    <td>{{ record['sleep'] }} hours</td>
+                                    <td>{{ record['submitted_at'] or 'Date unavailable' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="empty">No physical health records available.</p>
+                {% endif %}
+
+            </div>
+
+        </section>
+
+        <!-- MENTAL RECORDS -->
+
+        <section id="mental-records">
+
+            <div class="section-heading">
+                <div class="eyebrow">RECORD HISTORY</div>
+                <h2>Mental Wellness Records</h2>
+                <p>Previously submitted mental wellness check-ins.</p>
+            </div>
+
+            <div class="card table-wrapper">
+
+                {% if mental_records %}
+                    <table class="record-table">
+                        <thead>
+                            <tr>
+                                <th>Mood</th>
+                                <th>Stress Level</th>
+                                <th>Sleep Quality</th>
+                                <th>Notes</th>
+                                <th>Submitted At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for record in mental_records %}
+                                <tr>
+                                    <td>{{ record['mood'] }}</td>
+                                    <td>{{ record['stress_level'] }}/10</td>
+                                    <td>{{ record['sleep_quality'] }}</td>
+                                    <td>{{ record['notes'] or '-' }}</td>
+                                    <td>{{ record['submitted_at'] or 'Date unavailable' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="empty">No mental wellness records available.</p>
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <p><strong>VITARIX</strong> | Astronaut Health Monitoring System</p>
+        <p>Demonstration project using manually entered data and rule-based analysis.</p>
+        <p>Not live spacecraft sensor data. Not a medical diagnosis or replacement for professional medical advice.</p>
+    </footer>
+
+</div>
+
+<script>
+
+// SIDEBAR MENU
+
+function toggleMenu() {
+    document.getElementById("sidebar").classList.toggle("open");
+}
+
+document.querySelectorAll(".sidebar nav a").forEach(link => {
+    link.addEventListener("click", function() {
+        document.querySelectorAll(".sidebar nav a").forEach(item => {
+            item.classList.remove("active");
+        });
+
+        this.classList.add("active");
+
+        if (window.innerWidth <= 800) {
+            document.getElementById("sidebar").classList.remove("open");
+        }
+    });
+});
+
+// CHART DATA
+
+const physicalRecords = {{ records | tojson }};
+const mentalRecords = {{ mental_records | tojson }};
+
+const physicalData = [...physicalRecords].reverse();
+const mentalData = [...mentalRecords].reverse();
+
+const labels = physicalData.map((record, index) =>
+    record.submitted_at || `Record ${index + 1}`
+);
+
+const mentalLabels = mentalData.map((record, index) =>
+    record.submitted_at || `Record ${index + 1}`
+);
+
+Chart.defaults.color = "#b9cce0";
+Chart.defaults.font.family = "Segoe UI, Arial";
+
+function createLineChart(elementId, emptyId, label, data, chartLabels, color) {
+
+    const canvas = document.getElementById(elementId);
+    const emptyMessage = document.getElementById(emptyId);
+
+    if (!canvas) return;
+
+    if (data.length === 0) {
+        canvas.style.display = "none";
+
+        if (emptyMessage) {
+            emptyMessage.style.display = "block";
+        }
+
+        return;
+    }
+
+    new Chart(canvas, {
+        type: "line",
+
+        data: {
+            labels: chartLabels,
+
+            datasets: [{
+                label: label,
+                data: data,
+                borderColor: color,
+                backgroundColor: color.replace("1)", "0.12)"),
+                borderWidth: 2.5,
+                tension: 0.35,
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: color
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            interaction: {
+                intersect: false,
+                mode: "index"
+            },
+
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                        color: "#dcecff"
+                    }
+                }
+            },
+
+            scales: {
+                x: {
+                    ticks: {
+                        color: "#94a9bf",
+                        maxRotation: 45
+                    },
+                    grid: {
+                        color: "rgba(255,255,255,0.05)"
+                    }
+                },
+
+                y: {
+                    ticks: {
+                        color: "#94a9bf"
+                    },
+                    grid: {
+                        color: "rgba(255,255,255,0.06)"
+                    }
+                }
+            }
+        }
+    });
+}
+
+createLineChart(
+    "heartChart",
+    "heartEmpty",
+    "Heart Rate (BPM)",
+    physicalData.map(record => Number(record.heart_rate)),
+    labels,
+    "rgba(85,189,240,1)"
+);
+
+createLineChart(
+    "tempChart",
+    "tempEmpty",
+    "Temperature (°C)",
+    physicalData.map(record => Number(record.temperature)),
+    labels,
+    "rgba(78,214,162,1)"
+);
+
+createLineChart(
+    "sleepChart",
+    "sleepEmpty",
+    "Sleep Duration (Hours)",
+    physicalData.map(record => Number(record.sleep)),
+    labels,
+    "rgba(160,145,255,1)"
+);
+
+createLineChart(
+    "stressChart",
+    "stressEmpty",
+    "Stress Level",
+    mentalData.map(record => Number(record.stress_level)),
+    mentalLabels,
+    "rgba(245,198,107,1)"
+);
+
+// INTERACTIVE BODY MODEL
+
+function toggleBody(selectedId) {
+    const sections = document.querySelectorAll(".body-info");
+
+    sections.forEach(section => {
+        if (section.id === selectedId) {
+            section.style.display =
+                section.style.display === "block" ? "none" : "block";
+        } else {
+            section.style.display = "none";
+        }
+    });
+}
+
+</script>
+
+</body>
+</html>
