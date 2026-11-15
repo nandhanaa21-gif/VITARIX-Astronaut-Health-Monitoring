@@ -563,6 +563,64 @@ button:hover,.download-btn:hover {
     font-size:13px;
 }
 
+/* SLEEP MONITORING AND SPACEFLIGHT HAZARDS */
+
+.sleep-summary {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:15px;
+    margin-bottom:17px;
+}
+.sleep-metric {
+    background:#0a1b2d;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+}
+.sleep-metric small {
+    display:block;
+    color:var(--muted);
+    font-size:11px;
+    margin-bottom:7px;
+}
+.sleep-metric strong {
+    color:var(--cyan);
+    font-size:25px;
+}
+.hazard-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+}
+.hazard-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+}
+.hazard-card h3 {
+    color:var(--cyan);
+    font-size:15px;
+    margin-bottom:8px;
+}
+.hazard-card p {
+    color:#c4d5e6;
+    font-size:12px;
+    margin:7px 0;
+}
+.hazard-card strong { color:#edf5ff; }
+.hazard-note {
+    color:var(--muted);
+    font-size:11px;
+    margin-top:17px;
+    padding:12px;
+    background:#0a1b2d;
+    border-radius:8px;
+}
+@media(max-width:800px) {
+    .sleep-summary,.hazard-grid { grid-template-columns:1fr; }
+}
+
 /* TABLES */
 
 .table-wrapper {
@@ -737,6 +795,8 @@ footer p {
         <a href="#body-model"><span>♡</span> Body Model</a>
         <a href="#physical-records"><span>⌁</span> Physical Records</a>
         <a href="#mental-records"><span>◉</span> Mental Records</a>
+        <a href="#sleep-monitoring"><span>☾</span> Sleep Monitoring</a>
+        <a href="#spaceflight-hazards"><span>✦</span> Spaceflight Hazards</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -1307,6 +1367,117 @@ footer p {
 
             </div>
 
+        </section>
+
+        <!-- SLEEP MONITORING: uses the existing submitted health records -->
+        <section id="sleep-monitoring">
+            <div class="section-heading">
+                <div class="eyebrow">REST AND RECOVERY</div>
+                <h2>Sleep Monitoring</h2>
+                <p>Review submitted sleep duration and self-reported sleep quality.</p>
+            </div>
+
+            <div class="sleep-summary">
+                <div class="sleep-metric">
+                    <small>Latest Sleep Duration</small>
+                    <strong>{% if records %}{{ records[0]['sleep'] }} hrs{% else %}--{% endif %}</strong>
+                </div>
+                <div class="sleep-metric">
+                    <small>Latest Sleep Quality</small>
+                    <strong style="font-size:20px;">{% if mental_records %}{{ mental_records[0]['sleep_quality'] }}{% else %}--{% endif %}</strong>
+                </div>
+                <div class="sleep-metric">
+                    <small>Recorded Check-ins</small>
+                    <strong>{{ records|length }}</strong>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="panel-title">Sleep History</h3>
+                {% if records %}
+                    <div class="table-wrapper">
+                        <table class="record-table">
+                            <thead>
+                                <tr><th>Sleep Duration</th><th>Sleep Quality</th><th>Submitted At</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records %}
+                                <tr>
+                                    <td>{{ record['sleep'] }} hours</td>
+                                    <td>
+                                        {% if loop.first and mental_records %}
+                                            {{ mental_records[0]['sleep_quality'] }}
+                                        {% else %}
+                                            See Mental Wellness Records
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record['submitted_at'] or 'Date unavailable' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="empty">Sleep history will appear after you submit a health check-in.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3 class="panel-title">Sleep and Recovery Guidance</h3>
+                <p class="subtitle">General educational suggestions for maintaining a consistent rest routine during a mission.</p>
+                <div class="alert mental-alert">Maintain a regular sleep and wake schedule whenever mission operations allow.</div>
+                <div class="alert mental-alert">Reduce unnecessary light and noise during the planned rest period.</div>
+                <div class="alert mental-alert">Review repeated reports of poor sleep with the appropriate mission health professional.</div>
+                <p class="hazard-note">Sleep values are manually entered by the user. VITARIX does not measure sleep directly or provide a medical diagnosis.</p>
+            </div>
+        </section>
+
+        <!-- SPACEFLIGHT HAZARDS: displayed in one place only -->
+        <section id="spaceflight-hazards">
+            <div class="section-heading">
+                <div class="eyebrow">SPACEFLIGHT HEALTH AWARENESS</div>
+                <h2>The Five Major Hazards of Human Spaceflight</h2>
+                <p>Key spaceflight hazards and the health areas that may need attention.</p>
+            </div>
+
+            <div class="hazard-grid">
+                <article class="hazard-card">
+                    <h3>☢️ 1. Space Radiation</h3>
+                    <p><strong>What it is:</strong> Exposure to energetic particles and radiation in space.</p>
+                    <p><strong>Possible health effects:</strong> Increased long-term cancer risk and potential effects on the central nervous system and other tissues.</p>
+                    <p><strong>Monitoring considerations:</strong> Mission radiation exposure records, shielding conditions and health follow-up.</p>
+                </article>
+
+                <article class="hazard-card">
+                    <h3>🧑‍🚀 2. Isolation and Confinement</h3>
+                    <p><strong>What it is:</strong> Living and working in a small, enclosed environment, often with a limited crew.</p>
+                    <p><strong>Possible health effects:</strong> Stress, changes in mood, sleep disruption and interpersonal challenges.</p>
+                    <p><strong>Monitoring considerations:</strong> Mood, stress level, sleep quality and crew well-being check-ins.</p>
+                </article>
+
+                <article class="hazard-card">
+                    <h3>🌍 3. Distance from Earth</h3>
+                    <p><strong>What it is:</strong> Long communication delays and limited access to immediate support or supplies.</p>
+                    <p><strong>Possible health effects:</strong> Delayed medical support, increased operational stress and challenges responding to emergencies.</p>
+                    <p><strong>Monitoring considerations:</strong> Health trends, symptom reporting, medical resources and communication plans.</p>
+                </article>
+
+                <article class="hazard-card">
+                    <h3>🛰️ 4. Gravity Fields</h3>
+                    <p><strong>What it is:</strong> Exposure to microgravity during spaceflight and gravity changes during transitions.</p>
+                    <p><strong>Possible health effects:</strong> Bone and muscle loss, balance changes and fluid shifts.</p>
+                    <p><strong>Monitoring considerations:</strong> Exercise, physical performance, balance symptoms and relevant medical assessments.</p>
+                </article>
+
+                <article class="hazard-card">
+                    <h3>🧪 5. Hostile / Closed Environments</h3>
+                    <p><strong>What it is:</strong> Dependence on a controlled spacecraft environment with limited resources and potential equipment or environmental hazards.</p>
+                    <p><strong>Possible health effects:</strong> Effects associated with air quality, temperature, noise, contaminants or equipment failures.</p>
+                    <p><strong>Monitoring considerations:</strong> Cabin environmental systems, air quality, temperature, noise and crew-reported symptoms.</p>
+                </article>
+            </div>
+
+            <p class="hazard-note">Educational information only. These hazards are not directly measured by the current VITARIX demo. The dashboard uses manually submitted health information and does not replace mission medical procedures.</p>
         </section>
 
     </main>
