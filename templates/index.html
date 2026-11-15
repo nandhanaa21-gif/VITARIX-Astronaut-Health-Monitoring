@@ -879,6 +879,10 @@ footer p {
                         {% if records %}{{ records[0]['sleep'] }}{% else %}--{% endif %}
                     </div>
                     <div class="stat-unit">Hours</div>
+                    <div class="stat-unit">
+                        Sleep Quality:
+                        {% if mental_records %}{{ mental_records[0]['sleep_quality'] }}{% else %}--{% endif %}
+                    </div>
                 </div>
 
                 <div class="card stat-card">
@@ -918,6 +922,19 @@ footer p {
                     {% endif %}
 
                 {% endif %}
+            </div>
+
+            <div class="card">
+                <h3 class="panel-title">Spaceflight Hazard Awareness</h3>
+                <p class="subtitle">Quick access to the five major hazard areas and their health considerations.</p>
+                <div class="grid">
+                    <a class="alert mental-alert" href="#spaceflight-hazards" style="display:block;text-decoration:none;">☢️ Space Radiation</a>
+                    <a class="alert mental-alert" href="#spaceflight-hazards" style="display:block;text-decoration:none;">🧑‍🚀 Isolation and Confinement</a>
+                    <a class="alert mental-alert" href="#spaceflight-hazards" style="display:block;text-decoration:none;">🌍 Distance from Earth</a>
+                    <a class="alert mental-alert" href="#spaceflight-hazards" style="display:block;text-decoration:none;">🛰️ Gravity Fields</a>
+                    <a class="alert mental-alert" href="#spaceflight-hazards" style="display:block;text-decoration:none;">🧪 Hostile / Closed Environments</a>
+                </div>
+                <p class="hazard-note">Select Spaceflight Hazards in the sidebar to read the descriptions, possible health effects and monitoring considerations. These hazards are not directly measured by this demo.</p>
             </div>
 
         </section>
