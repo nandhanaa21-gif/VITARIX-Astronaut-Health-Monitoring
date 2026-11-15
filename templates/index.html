@@ -44,17 +44,39 @@ body {
     left:0;
     width:245px;
     height:100vh;
+    height:100dvh;
     background:var(--sidebar);
     border-right:1px solid var(--border);
     padding:25px 15px;
     z-index:200;
     display:flex;
     flex-direction:column;
+
+    /* Keep every menu item reachable on shorter screens */
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:var(--blue) var(--sidebar);
+}
+
+.sidebar::-webkit-scrollbar {
+    width:7px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background:var(--sidebar);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background:var(--blue);
+    border-radius:10px;
 }
 
 .brand {
     padding:0 12px 28px;
     border-bottom:1px solid var(--border);
+    flex-shrink:0;
 }
 
 .brand h1 {
@@ -77,12 +99,14 @@ body {
     font-weight:700;
     letter-spacing:1.5px;
     padding:25px 12px 10px;
+    flex-shrink:0;
 }
 
 .sidebar nav {
     display:flex;
     flex-direction:column;
     gap:5px;
+    flex-shrink:0;
 }
 
 .sidebar nav a {
@@ -116,6 +140,7 @@ body {
     border-top:1px solid var(--border);
     color:var(--muted);
     font-size:11px;
+    flex-shrink:0;
 }
 
 .status-dot {
@@ -793,10 +818,10 @@ footer p {
     <nav>
         <a href="#analytics"><span>▥</span> Analytics</a>
         <a href="#body-model"><span>♡</span> Body Model</a>
-        <a href="#physical-records"><span>⌁</span> Physical Records</a>
-        <a href="#mental-records"><span>◉</span> Mental Records</a>
         <a href="#sleep-monitoring"><span>☾</span> Sleep Monitoring</a>
         <a href="#spaceflight-hazards"><span>✦</span> Spaceflight Hazards</a>
+        <a href="#physical-records"><span>⌁</span> Physical Records</a>
+        <a href="#mental-records"><span>◉</span> Mental Records</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -935,6 +960,15 @@ footer p {
                     <a class="alert mental-alert" href="#spaceflight-hazards" style="display:block;text-decoration:none;">🧪 Hostile / Closed Environments</a>
                 </div>
                 <p class="hazard-note">Select Spaceflight Hazards in the sidebar to read the descriptions, possible health effects and monitoring considerations. These hazards are not directly measured by this demo.</p>
+            </div>
+
+            <div class="card">
+                <h3 class="panel-title">Health Record History</h3>
+                <p class="subtitle">Quick access to the detailed physical and mental wellness records, listed at the end of the website.</p>
+                <div class="grid">
+                    <a class="alert physical-alert" href="#physical-records" style="display:block;text-decoration:none;">♡ View Physical Health Records</a>
+                    <a class="alert mental-alert" href="#mental-records" style="display:block;text-decoration:none;">◉ View Mental Wellness Records</a>
+                </div>
             </div>
 
         </section>
@@ -1298,94 +1332,6 @@ footer p {
 
         </section>
 
-        <!-- PHYSICAL RECORDS -->
-
-        <section id="physical-records">
-
-            <div class="section-heading">
-                <div class="eyebrow">RECORD HISTORY</div>
-                <h2>Physical Health Records</h2>
-                <p>Previously submitted physical health check-ins.</p>
-            </div>
-
-            <div class="card table-wrapper">
-
-                {% if records %}
-                    <table class="record-table">
-                        <thead>
-                            <tr>
-                                <th>Heart Rate</th>
-                                <th>Temperature</th>
-                                <th>Blood Pressure</th>
-                                <th>Sleep</th>
-                                <th>Submitted At</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {% for record in records %}
-                                <tr>
-                                    <td>{{ record['heart_rate'] }} BPM</td>
-                                    <td>{{ record['temperature'] }} °C</td>
-                                    <td>{{ record['blood_pressure'] }}</td>
-                                    <td>{{ record['sleep'] }} hours</td>
-                                    <td>{{ record['submitted_at'] or 'Date unavailable' }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p class="empty">No physical health records available.</p>
-                {% endif %}
-
-            </div>
-
-        </section>
-
-        <!-- MENTAL RECORDS -->
-
-        <section id="mental-records">
-
-            <div class="section-heading">
-                <div class="eyebrow">RECORD HISTORY</div>
-                <h2>Mental Wellness Records</h2>
-                <p>Previously submitted mental wellness check-ins.</p>
-            </div>
-
-            <div class="card table-wrapper">
-
-                {% if mental_records %}
-                    <table class="record-table">
-                        <thead>
-                            <tr>
-                                <th>Mood</th>
-                                <th>Stress Level</th>
-                                <th>Sleep Quality</th>
-                                <th>Notes</th>
-                                <th>Submitted At</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {% for record in mental_records %}
-                                <tr>
-                                    <td>{{ record['mood'] }}</td>
-                                    <td>{{ record['stress_level'] }}/10</td>
-                                    <td>{{ record['sleep_quality'] }}</td>
-                                    <td>{{ record['notes'] or '-' }}</td>
-                                    <td>{{ record['submitted_at'] or 'Date unavailable' }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p class="empty">No mental wellness records available.</p>
-                {% endif %}
-
-            </div>
-
-        </section>
-
         <!-- SLEEP MONITORING: uses the existing submitted health records -->
         <section id="sleep-monitoring">
             <div class="section-heading">
@@ -1496,6 +1442,96 @@ footer p {
 
             <p class="hazard-note">Educational information only. These hazards are not directly measured by the current VITARIX demo. The dashboard uses manually submitted health information and does not replace mission medical procedures.</p>
         </section>
+
+        <!-- RECORD HISTORY: kept at the end of the website -->
+        <!-- PHYSICAL RECORDS -->
+
+        <section id="physical-records">
+
+            <div class="section-heading">
+                <div class="eyebrow">RECORD HISTORY</div>
+                <h2>Physical Health Records</h2>
+                <p>Previously submitted physical health check-ins.</p>
+            </div>
+
+            <div class="card table-wrapper">
+
+                {% if records %}
+                    <table class="record-table">
+                        <thead>
+                            <tr>
+                                <th>Heart Rate</th>
+                                <th>Temperature</th>
+                                <th>Blood Pressure</th>
+                                <th>Sleep</th>
+                                <th>Submitted At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for record in records %}
+                                <tr>
+                                    <td>{{ record['heart_rate'] }} BPM</td>
+                                    <td>{{ record['temperature'] }} °C</td>
+                                    <td>{{ record['blood_pressure'] }}</td>
+                                    <td>{{ record['sleep'] }} hours</td>
+                                    <td>{{ record['submitted_at'] or 'Date unavailable' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="empty">No physical health records available.</p>
+                {% endif %}
+
+            </div>
+
+        </section>
+
+        <!-- MENTAL RECORDS -->
+
+        <section id="mental-records">
+
+            <div class="section-heading">
+                <div class="eyebrow">RECORD HISTORY</div>
+                <h2>Mental Wellness Records</h2>
+                <p>Previously submitted mental wellness check-ins.</p>
+            </div>
+
+            <div class="card table-wrapper">
+
+                {% if mental_records %}
+                    <table class="record-table">
+                        <thead>
+                            <tr>
+                                <th>Mood</th>
+                                <th>Stress Level</th>
+                                <th>Sleep Quality</th>
+                                <th>Notes</th>
+                                <th>Submitted At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for record in mental_records %}
+                                <tr>
+                                    <td>{{ record['mood'] }}</td>
+                                    <td>{{ record['stress_level'] }}/10</td>
+                                    <td>{{ record['sleep_quality'] }}</td>
+                                    <td>{{ record['notes'] or '-' }}</td>
+                                    <td>{{ record['submitted_at'] or 'Date unavailable' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="empty">No mental wellness records available.</p>
+                {% endif %}
+
+            </div>
+
+        </section>
+
 
     </main>
 
